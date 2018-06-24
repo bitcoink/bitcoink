@@ -15,7 +15,7 @@ Lightweight library for Bitcoin, written in Kotlin.
 
 ### Gradle
 ```Groovy
-compile 'info.p2sh.bitcoink:datastructures:1.5.4'
+compile 'info.p2sh.bitcoink:datastructures:0.1.0'
 ```
 
 ## Overview

@@ -12,7 +12,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath files('libs/gradle-witness.jar')
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.+"
     }
 }
 
@@ -20,6 +20,8 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'kotlin'
     apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+    apply plugin: 'com.jfrog.bintray'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -55,5 +57,89 @@ subprojects {
         compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
         testCompile "junit:junit:4.12"
+    }
+
+    afterEvaluate {
+        task sourceJar(type: Jar, dependsOn: classes) {
+            classifier 'sources'
+            from sourceSets.main.kotlin
+            duplicatesStrategy = "exclude"
+            def platformSrc = sourceSets.main.kotlin
+            def commonSrc = project(':utils').sourceSets.main.kotlin
+            from (platformSrc + commonSrc)
+        }
+
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            classifier = 'javadoc'
+            from javadoc.destinationDir
+        }
+    }
+
+    tasks.withType(Jar) {
+        archivesBaseName = "bitcoink"
+    }
+
+    def pomConfig = {
+        licenses {
+            license {
+                name "MIT"
+                url "https://opensource.org/licenses/MIT"
+                distribution "repo"
+            }
+        }
+        developers {
+            developer {
+                id "alecalve"
+                name "Antoine Le Calvez"
+                email "antoine@alc.io"
+            }
+        }
+
+        scm {
+            url "https://github.com/bitcoink/bitcoink"
+        }
+    }
+
+    publishing {
+        publications {
+            mavenProject(MavenPublication) {
+                from components.java
+                groupId "info.p2sh.bitcoink"
+                artifactId "datastructures"
+                version VERSION
+
+                pom.withXml {
+                    def root = asNode()
+                    root.appendNode('description', "bitcoink - $version - Lightweight library for Bitcoin, written in Kotlin")
+                    root.children().last() + pomConfig
+                }
+
+                artifact sourceJar {
+                    classifier "sources"
+                }
+                artifact javadocJar {
+                    classifier "javadoc"
+                }
+            }
+        }
+    }
+
+    bintray {
+        user = 'alecalve'
+        key = System.getenv('BINTRAY_KEY')
+        publications = ['mavenProject']
+        pkg {
+            repo = 'bitcoink'
+            name = 'bitcoink'
+            userOrg = 'bitcoink'
+            licenses = ['MIT']
+            vcsUrl = 'https://github.com/bitcoink/bitcoink.git'
+            issueTrackerUrl = 'https://github.com/bitcoink/bitcoink/issues'
+            version {
+                name = VERSION
+                desc = "bitcoink - Lightweight library for Bitcoin, written in Kotlin"
+                released = new Date()
+            }
+        }
     }
 }
