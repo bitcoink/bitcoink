@@ -1,0 +1,59 @@
+allprojects {
+    group = 'info.p2sh.bitcoink'
+    version = VERSION
+}
+
+buildscript {
+    ext.kotlin_version = '1.2.30'
+
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath files('libs/gradle-witness.jar')
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'kotlin'
+    apply plugin: 'maven'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    configurations {
+        ktlint
+    }
+
+    task ktlint(type: JavaExec, group: "verification") {
+        description = "Check Kotlin code style."
+        classpath = configurations.ktlint
+        main = "com.github.shyiko.ktlint.Main"
+        args "src/**/*.kt"
+    }
+
+    check.dependsOn ktlint
+
+    task ktlintFormat(type: JavaExec, group: "formatting") {
+        description = "Fix Kotlin code style deviations."
+        classpath = configurations.ktlint
+        main = "com.github.shyiko.ktlint.Main"
+        args "-F", "src/**/*.kt"
+    }
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        ktlint "com.github.shyiko:ktlint:0.19.0"
+
+        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
+        testCompile "junit:junit:4.12"
+    }
+}

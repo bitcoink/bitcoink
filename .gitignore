@@ -1,0 +1,7 @@
+*.iml
+out/
+.gradle/
+build/
+gradle/
+gradlew*
+.idea/
